@@ -54,6 +54,7 @@ select * from products LIMIT 10;
 -- http://www.acme.com/SH55126554/VD55147564 outdoors
 
 
+-- Retrieve the transaction data from omniture log data:
 CREATE VIEW omniture AS
 SELECT col_2 ts, col_8 ip, col_13 url, col_14 swid, col_50 city, col_51 country, col_53 state
 FROM omniturelogs;
@@ -73,26 +74,25 @@ select * from omniture LIMIT 10;
 
 
 
--- Simple Join:
-
+-- For each transaction, retrieve the customer ID, the city, country, and state the buyer live, and the product name:
 SELECT o.swid, o.city, o.country, o.state, p.category
 FROM omniture AS o, products AS p 
 WHERE o.url = p.url
 LIMIT 20;
 
 
--- Left outer join:
+-- Retrieve the customer ID, and customer birthdate:
 SELECT users.gender_cd, users.birth_dt
 FROM omniture JOIN products ON (omniture.url = products.url) LEFT OUTER JOIN users ON (omniture.swid = concat('{', users.swid, '}'))
 LIMIT 10;
 
--- Step 15:
+-- Creat a table contains the overall customer demographic data and their shopping history:
 CREATE TABLE WEBLOGANALYTICS AS
 SELECT o.ts Logdate, o.url URL, o.ip IP, o.city CITY, UPPER(o.state) STATE, o.country COUNTRY, p.category CATEGORY, FLOOR(datediff(from_unixtime(unix_timestamp(o.ts, 'yyyy-MM-dd HH:mm:ss'),'yyyy-MM-dd'), from_unixtime(unix_timestamp(u.birth_dt,'dd-MMM-yy'),'yyyy-MM-dd'))/365.25) CURRENT_AGE, u.gender_cd GENDER_CODE
 FROM omniture o JOIN products p ON (o.url = p.url) JOIN users u ON (o.swid = concat('{', u.swid, '}'));
 
 
--- Step 16:
+--- Count number of each type of products sold to customers in each gender, from different cities in Texas, and who aged between 19-45.
 SELECT GENDER_CODE GENDER_CD, CITY, CATEGORY, COUNT(*) AS AMOUNT
 FROM WEBLOGANALYTICS
 WHERE STATE == 'TX' AND CURRENT_AGE > 19 AND CURRENT_AGE < 45
